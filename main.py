@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
-#!/pkg/ldc/bin/python2.5
 #-----------------------------------------------------------------------------
-# Name:        main.py
-#
+# Name:        	main.py
+# Authors:		Armand Vilalta, Ruben Garzon & Feran Pares
 #-----------------------------------------------------------------------------
+
 from auxiliar import *
 from time import time
 
@@ -73,7 +72,7 @@ def getDicsfromPairs(LPairs, B, T):
 			Tttw[wordTagDIC[tkey[0]],wordTagDIC[tkey[1]],tkey[2]] += T[tkey]
 
 	return (wordTagDIC,Btw,Btt,Ttww,Tttw)
-
+'''
 def computeTaggedModel (pathfile):
 	LPairs = getTaggedWordsFromFile(pathfile)
 	Lwords = map(lambda x:x[0],LPairs)
@@ -166,7 +165,7 @@ def computeTaggedModelTWW (pathfile):
 		Tperplexity[part] *= 1/float(part)
 
 	return (Tperplexity[1], Tperplexity[2], Tperplexity[4])
-	
+
 def computeTaggedModelTTW (pathfile):
 	LPairs = getTaggedWordsFromFile(pathfile)
 	Lwords = map(lambda x:x[0],LPairs)
@@ -221,60 +220,157 @@ def computeTaggedModelTTW (pathfile):
 		Tperplexity[part] *= 1/float(part)
 
 	return (Tperplexity[1], Tperplexity[2], Tperplexity[4])
-	
-	
-
-
 '''
+	
+def computeAllTaggedModels (pathfile):
+	LPairs = getTaggedWordsFromFile(pathfile)
+	Lwords = map(lambda x:x[0],LPairs)
+	Ltags = map(lambda x:x[1],LPairs)
+	Nwords = len(Lwords)
+	Ntags = len(Ltags)
+	
+	TperplexityWWW = {}
+	TperplexityWWW[1] = 0.0 #[0.0,0.0,0.0]
+	TperplexityWWW[2] = 0.0
+	TperplexityWWW[4] = 0.0
+	TperplexityTWW = {}
+	TperplexityTWW[1] = 0.0
+	TperplexityTWW[2] = 0.0
+	TperplexityTWW[4] = 0.0
+	TperplexityTTW = {}
+	TperplexityTTW[1] = 0.0
+	TperplexityTTW[2] = 0.0
+	TperplexityTTW[4] = 0.0
+
+	for part in [1,2,4]:
+		for i in range(part):
+			TentropyWWW = 0.0
+			TentropyTWW = 0.0
+			TentropyTTW = 0.0
+			(U,B,T) = countNgrams(Lwords,i*Nwords/part,(i+1)*Nwords/part)
+			(Ut, Bt, Tt) = countNgrams(Ltags,i*Ntags/part,(i+1)*Ntags/part)
+			length = float(Nwords/part) #equal length of tags
+			pWWW = {}
+			BpWWW = {}
+			pTWW = {}
+			BpTWW = {}
+			pTTW = {}
+			BpTTW = {}
+			wordTagDIC = {}
+			Btw = {}
+			Btt = {}
+			Ttww = {}
+			Tttw = {}
+			
+			(wordTagDIC, Btw, Btt, Ttww, Tttw) = getDicsfromPairs(LPairs, B, T)
+
+			for key in U.keys():
+				pX = U[key]/length
+				pWWW[key] = [pX, 0.0]
+
+			for key in Ut.keys():
+				pX = Ut[key]/length
+				pTWW[key] = [pX, 0.0]
+				pTTW[key] = [pX, 0.0]
+
+			for bkey in B.keys():
+				pYIX = float(B[bkey])/float(U[bkey[0]])
+				BpWWW[bkey] = [pYIX, 0.0]
+
+			for bkey in Btw.keys():
+				pYIX = float(Btw[bkey])/float(Ut[bkey[0]])
+				BpTWW[bkey] = [pYIX, 0.0]
+
+			for bkey in Btt.keys():
+				pYIX = float(Btt[bkey])/float(Ut[bkey[0]])
+				BpTTW[bkey] = [pYIX, 0.0]
+
+			for tkey in T.keys():
+				pZIXY = float(T[tkey])/float(B[tkey[0], tkey[1]])
+				BpWWW[tkey[0],tkey[1]][1] += pZIXY * log(pZIXY,2)
+
+			for tkey in Ttww.keys():
+				pZIXY = float(Ttww[tkey])/float(Btw[tkey[0], tkey[1]])
+				BpTWW[tkey[0],tkey[1]][1] += pZIXY * log(pZIXY,2)
+
+			for tkey in Tttw.keys():
+				pZIXY = float(Tttw[tkey])/float(Btt[tkey[0],tkey[1]])
+				BpTTW[tkey[0],tkey[1]][1] += pZIXY * log(pZIXY,2)
+
+			for Bpkey in BpWWW.keys():
+				pWWW[Bpkey[0]][1] += BpWWW[Bpkey][0]*BpWWW[Bpkey][1]
+
+			for Bpkey in BpTWW.keys():
+				pTWW[Bpkey[0]][1] += BpTWW[Bpkey][0]*BpTWW[Bpkey][1]
+
+			for Bpkey in BpTTW.keys():
+				pTTW[Bpkey[0]][1] += BpTTW[Bpkey][0]*BpTTW[Bpkey][1]
+
+			for val in pWWW.values():
+				TentropyWWW -= val[0] * val[1]
+
+			for val in pTWW.values():
+				TentropyTWW -= val[0] * val[1]
+
+			for val in pTTW.values():
+				TentropyTTW -= val[0] * val[1]
+
+			TperplexityWWW[part] += pow(2,TentropyWWW)
+			TperplexityTWW[part] += pow(2,TentropyTWW)
+			TperplexityTTW[part] += pow(2,TentropyTTW)
+
+		TperplexityWWW[part] *= 1/float(part)
+		TperplexityTWW[part] *= 1/float(part)
+		TperplexityTTW[part] *= 1/float(part)
+
+	return (TperplexityWWW[1], TperplexityWWW[2], TperplexityWWW[4], TperplexityTWW[1], TperplexityTWW[2], TperplexityTWW[4], TperplexityTTW[1], TperplexityTTW[2], TperplexityTTW[4])
+
+
+
+
+#(FPerplexityWWW, HPerplexityWWW, QPerplexityWWW) = computeTaggedModel ("corpus/taggedBrown.txt")
+#(FPerplexityTWW, HPerplexityTWW, QPerplexityTWW) = computeTaggedModelTWW ("corpus/taggedBrown.txt")
+#(FPerplexityTTW, HPerplexityTTW, QPerplexityTTW) = computeTaggedModelTTW ("corpus/taggedBrown.txt")
+
+print ''
+print 'Computing entropies with english corpus...'
 t0 = time()
-(UEntropy, BEntropy, TEntropy) = computeModel("corpus/en.txt")
-t01 = time()
-print (t01-t0),'s -- Entropies of english corpus: ',UEntropy, BEntropy, TEntropy
+(UEntropyEN, BEntropyEN, TEntropyEN) = computeModel("corpus/en.txt")
+t00 = time()
 
+print ''
+print 'Computing entropies with spanish corpus...'
 t1 = time()
-(UEntropyes, BEntropyes, TEntropyes) = computeModel("corpus/es.txt")
+(UEntropyES, BEntropyES, TEntropyES) = computeModel("corpus/es.txt")
 t11 = time()
-print (t11-t1),'s -- Entropies of spanish corpus: ',UEntropyes, BEntropyes, TEntropyes
 
-print 'Relation between entropies in english and spanish', UEntropy/UEntropyes, BEntropy/BEntropyes, TEntropy/TEntropyes
-'''
+print ''
+print '----------------------------------ENTROPIES-----------------------------------'
+print '------------------------------------------------------------------------------'
+print '|| Corpus language ||     Unigram     ||     Bigram      ||     Trigram     ||'
+print '||     English     || ',UEntropyEN,'   || ', BEntropyEN,'  || ', TEntropyEN,' ||'
+print '||     Spanish     || ',UEntropyES,' || ', BEntropyES,' || ', TEntropyES,'   ||'
+print '------------------------------------------------------------------------------'
+print ''
+print 'Time to run english entropies: ', (t00-t0)
+print 'Time to run spanish entropies: ', (t11-t1)
+print ''
+print ''
 
-#FPerplexity = computeTaggedModel ("corpus/taggedBrown.txt", 1)
-#print 'Perplexity of full Browncorpus: ' , FPerplexity
+#print 'Relation between entropies in english and spanish', UEntropy/UEntropyes, BEntropy/BEntropyes, TEntropy/TEntropyes
 
-#HPerplexity = computeTaggedModel ("corpus/taggedBrown.txt", 2)
-#print 'Perplexity of half Browncorpus: ' , HPerplexity
+print 'Computing perplexities with Browncorpus...'
+t2 = time()
+(FPerplexityWWW, HPerplexityWWW, QPerplexityWWW, FPerplexityTWW, HPerplexityTWW, QPerplexityTWW, FPerplexityTTW, HPerplexityTTW, QPerplexityTTW) = computeAllTaggedModels("corpus/taggedBrown.txt")
+t22 = time()
 
-#QPerplexity = computeTaggedModel ("corpus/taggedBrown.txt", 4)
-#print 'Perplexity of quarter Browncorpus: ' , QPerplexity
-
-
-#FPerplexityTWW = computeTaggedModelTWW ("corpus/taggedBrown.txt", 1)
-#print 'Perplexity of full Browncorpus TWW: ' , FPerplexityTWW
-
-#FPerplexityTTW = computeTaggedModelTTW ("corpus/taggedBrown.txt", 1)
-#print 'Perplexity of full Browncorpus TTW: ' , FPerplexityTTW
-
-#HPerplexityTWW = computeTaggedModelTWW ("corpus/taggedBrown.txt", 2)
-#print 'Perplexity of half Browncorpus TWW: ' , HPerplexityTWW
-
-#HPerplexityTTW = computeTaggedModelTTW ("corpus/taggedBrown.txt", 2)
-#print 'Perplexity of half Browncorpus TTW: ' , HPerplexityTTW
-
-#QPerplexityTWW = computeTaggedModelTWW ("corpus/taggedBrown.txt", 4)
-#print 'Perplexity of quarter Browncorpus TWW: ' , QPerplexityTWW
-
-#QPerplexityTTW = computeTaggedModelTTW ("corpus/taggedBrown.txt", 4)
-#print 'Perplexity of quarter Browncorpus TTW: ' , QPerplexityTTW
-
-(FPerplexity, HPerplexity, QPerplexity) = computeTaggedModel ("corpus/taggedBrown.txt")
-(FPerplexityTWW, HPerplexityTWW, QPerplexityTWW) = computeTaggedModelTWW ("corpus/taggedBrown.txt")
-(FPerplexityTTW, HPerplexityTTW, QPerplexityTTW) = computeTaggedModelTTW ("corpus/taggedBrown.txt")
-
-
+print ''
+print '------------------------------PERPLEXITIES------------------------------'
 print '------------------------------------------------------------------------'
 print '||  Model    ||      Full       ||      Half       ||     Quarter     ||'
-print '|| <x,y,z>   || ',FPerplexity,'  || ',HPerplexity,' || ',QPerplexity,' ||'
+print '|| <x,y,z>   || ',FPerplexityWWW,'  || ',HPerplexityWWW,' || ',QPerplexityWWW,' ||'
 print '|| <x`,y,z>  || ',FPerplexityTWW,' || ',HPerplexityTWW,'  || ',QPerplexityTWW,' ||'
 print '|| <x`,y`,z> || ',FPerplexityTTW,' || ',HPerplexityTTW,' || ',QPerplexityTTW,' ||'
 print '------------------------------------------------------------------------'
+print ''
+print 'Time to run perplexities: ', (t22-t2)
