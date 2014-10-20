@@ -40,43 +40,6 @@ def computeModel(pathfile):
 
 	return (Uentropy, Bentropy, Tentropy)
 
-def computeTaggedModel (pathfile, part):
-	LofPwords = getTaggedWordsFromFile(pathfile)
-	Lwords = map(lambda x:x[0],LofPwords)
-	Nwords = len(Lwords)
-	Tperplexity = 0.0
-
-	for i in range(part):
-		Tentropy = 0.0
-		(U,B,T) = countNgrams(Lwords,i*Nwords/part,(i+1)*Nwords/part)
-		length = float(Nwords/part)
-		prob = {}
-		Bprob = {}
-
-		for key in U.keys():
-			pX = U[key]/length
-			prob[key] = [pX, 0.0]
-
-		for bkey in B.keys():
-			pYIX = float(B[bkey])/float(U[bkey[0]])
-			Bprob[bkey] = [pYIX, 0.0]
-
-		for tkey in T.keys():
-			pZIXY = float(T[tkey])/float(B[tkey[0], tkey[1]])
-			Bprob[tkey[0],tkey[1]][1] += pZIXY * log(pZIXY,2)
-
-		for Bprobkey in Bprob.keys():
-			prob[Bprobkey[0]][1] += Bprob[Bprobkey][0]*Bprob[Bprobkey][1]
-
-		for val in prob.values():
-			Tentropy -= val[0] * val[1]
-		
-		Tperplexity += pow(2,Tentropy)
-
-	Tperplexity *= 1/float(part)
-
-	return (Tperplexity)
-
 def getDicsfromPairs(LPairs, B, T):
 	Btw = {}
 	Btt = {}
@@ -111,105 +74,153 @@ def getDicsfromPairs(LPairs, B, T):
 
 	return (wordTagDIC,Btw,Btt,Ttww,Tttw)
 
+def computeTaggedModel (pathfile):
+	LPairs = getTaggedWordsFromFile(pathfile)
+	Lwords = map(lambda x:x[0],LPairs)
+	Nwords = len(Lwords)
+	Tperplexity = {}
+	Tperplexity[1] = 0.0
+	Tperplexity[2] = 0.0
+	Tperplexity[4] = 0.0
 
-def computeTaggedModelTWW (pathfile, part):
+	for part in [1,2,4]:
+		for i in range(part):
+			Tentropy = 0.0
+			(U,B,T) = countNgrams(Lwords,i*Nwords/part,(i+1)*Nwords/part)
+			length = float(Nwords/part)
+			prob = {}
+			Bprob = {}
+
+			for key in U.keys():
+				pX = U[key]/length
+				prob[key] = [pX, 0.0]
+
+			for bkey in B.keys():
+				pYIX = float(B[bkey])/float(U[bkey[0]])
+				Bprob[bkey] = [pYIX, 0.0]
+
+			for tkey in T.keys():
+				pZIXY = float(T[tkey])/float(B[tkey[0], tkey[1]])
+				Bprob[tkey[0],tkey[1]][1] += pZIXY * log(pZIXY,2)
+
+			for Bprobkey in Bprob.keys():
+				prob[Bprobkey[0]][1] += Bprob[Bprobkey][0]*Bprob[Bprobkey][1]
+
+			for val in prob.values():
+				Tentropy -= val[0] * val[1]
+			
+			Tperplexity[part] += pow(2,Tentropy)
+
+		Tperplexity[part] *= 1/float(part)
+
+	return (Tperplexity[1], Tperplexity[2], Tperplexity[4])
+
+def computeTaggedModelTWW (pathfile):
 	LPairs = getTaggedWordsFromFile(pathfile)
 	Lwords = map(lambda x:x[0],LPairs)
 	Ltags = map(lambda x:x[1],LPairs)
 	#wordTagDIC = getTagfromWord(LPairs)
 	Nwords = len(Lwords)
 	Ntags = len(Ltags)
-	Tperplexity = 0.0
+	Tperplexity = {}
+	Tperplexity[1] = 0.0
+	Tperplexity[2] = 0.0
+	Tperplexity[4] = 0.0
 
-	for i in range(part):
-		Tentropy = 0.0
-		(U,B,T) = countNgrams(Lwords,i*Nwords/part,(i+1)*Nwords/part)
-		(Ut, Bt, Tt) = countNgrams(Ltags,i*Ntags/part,(i+1)*Ntags/part)
-		length = float(Nwords/part) #equal length of tags
-		prob = {}
-		Bprob = {}
-		wordTagDIC = {}
-		Btw = {}
-		Btt = {}
-		Ttww = {}
-		Tttw = {}
-		
-		(wordTagDIC, Btw, Btt, Ttww, Tttw) = getDicsfromPairs(LPairs, B, T)
+	for part in [1,2,4]:
+		for i in range(part):
+			Tentropy = 0.0
+			(U,B,T) = countNgrams(Lwords,i*Nwords/part,(i+1)*Nwords/part)
+			(Ut, Bt, Tt) = countNgrams(Ltags,i*Ntags/part,(i+1)*Ntags/part)
+			length = float(Nwords/part) #equal length of tags
+			prob = {}
+			Bprob = {}
+			wordTagDIC = {}
+			Btw = {}
+			Btt = {}
+			Ttww = {}
+			Tttw = {}
+			
+			(wordTagDIC, Btw, Btt, Ttww, Tttw) = getDicsfromPairs(LPairs, B, T)
 
-		for key in Ut.keys():
-			pX = Ut[key]/length
-			prob[key] = [pX, 0.0]
+			for key in Ut.keys():
+				pX = Ut[key]/length
+				prob[key] = [pX, 0.0]
 
-		for bkey in Btw.keys():
-			pYIX = float(Btw[bkey])/float(Ut[bkey[0]])
-			Bprob[bkey] = [pYIX, 0.0]
+			for bkey in Btw.keys():
+				pYIX = float(Btw[bkey])/float(Ut[bkey[0]])
+				Bprob[bkey] = [pYIX, 0.0]
 
-		for tkey in Ttww.keys():
-			pZIXY = float(Ttww[tkey])/float(Btw[tkey[0], tkey[1]])
-			Bprob[tkey[0],tkey[1]][1] += pZIXY * log(pZIXY,2)
+			for tkey in Ttww.keys():
+				pZIXY = float(Ttww[tkey])/float(Btw[tkey[0], tkey[1]])
+				Bprob[tkey[0],tkey[1]][1] += pZIXY * log(pZIXY,2)
 
-		for Bprobkey in Bprob.keys():
-			prob[Bprobkey[0]][1] += Bprob[Bprobkey][0]*Bprob[Bprobkey][1]
+			for Bprobkey in Bprob.keys():
+				prob[Bprobkey[0]][1] += Bprob[Bprobkey][0]*Bprob[Bprobkey][1]
 
-		for val in prob.values():
-			Tentropy -= val[0] * val[1]
-		
-		Tperplexity += pow(2,Tentropy)
+			for val in prob.values():
+				Tentropy -= val[0] * val[1]
+			
+			Tperplexity[part] += pow(2,Tentropy)
 
-	Tperplexity *= 1/float(part)
+		Tperplexity[part] *= 1/float(part)
 
-	return (Tperplexity)
+	return (Tperplexity[1], Tperplexity[2], Tperplexity[4])
 	
-def computeTaggedModelTTW (pathfile, part):
+def computeTaggedModelTTW (pathfile):
 	LPairs = getTaggedWordsFromFile(pathfile)
 	Lwords = map(lambda x:x[0],LPairs)
 	Ltags = map(lambda x:x[1],LPairs)
 	#wordTagDIC = getTagfromWord(LPairs)
 	Nwords = len(Lwords)
 	Ntags = len(Ltags)
-	Tperplexity = 0.0
+	Tperplexity = {}
+	Tperplexity[1] = 0.0
+	Tperplexity[2] = 0.0
+	Tperplexity[4] = 0.0
 
-	for i in range(part):
-		Tentropy = 0.0
-		(U,B,T) = countNgrams(Lwords,i*Nwords/part,(i+1)*Nwords/part)
-		(Ut, Bt, Tt) = countNgrams(Ltags,i*Ntags/part,(i+1)*Ntags/part)
-		length = float(Nwords/part) #equal length of tags
-		#lengthtags = float(Ntags/part)
-		prob = {}
-		Bprob = {}
-		wordTagDIC = {}
-		Btw = {}
-		Btt = {}
-		Ttww = {}
-		Tttw = {}
-		
-		(wordTagDIC, Btw, Btt, Ttww, Tttw) = getDicsfromPairs(LPairs, B, T)
-		
-		
+	for part in [1,2,4]:
+		for i in range(part):
+			Tentropy = 0.0
+			(U,B,T) = countNgrams(Lwords,i*Nwords/part,(i+1)*Nwords/part)
+			(Ut, Bt, Tt) = countNgrams(Ltags,i*Ntags/part,(i+1)*Ntags/part)
+			length = float(Nwords/part) #equal length of tags
+			#lengthtags = float(Ntags/part)
+			prob = {}
+			Bprob = {}
+			wordTagDIC = {}
+			Btw = {}
+			Btt = {}
+			Ttww = {}
+			Tttw = {}
+			
+			(wordTagDIC, Btw, Btt, Ttww, Tttw) = getDicsfromPairs(LPairs, B, T)
+			
+			
 
-		for key in Ut.keys():
-			pX = Ut[key]/length
-			prob[key] = [pX, 0.0]
+			for key in Ut.keys():
+				pX = Ut[key]/length
+				prob[key] = [pX, 0.0]
 
-		for bkey in Btt.keys():
-			pYIX = float(Btt[bkey])/float(Ut[bkey[0]])
-			Bprob[bkey] = [pYIX, 0.0]
+			for bkey in Btt.keys():
+				pYIX = float(Btt[bkey])/float(Ut[bkey[0]])
+				Bprob[bkey] = [pYIX, 0.0]
 
-		for tkey in Tttw.keys():
-			pZIXY = float(Tttw[tkey])/float(Btt[tkey[0],tkey[1]])
-			Bprob[tkey[0],tkey[1]][1] += pZIXY * log(pZIXY,2)
+			for tkey in Tttw.keys():
+				pZIXY = float(Tttw[tkey])/float(Btt[tkey[0],tkey[1]])
+				Bprob[tkey[0],tkey[1]][1] += pZIXY * log(pZIXY,2)
 
-		for Bprobkey in Bprob.keys():
-			prob[Bprobkey[0]][1] += Bprob[Bprobkey][0]*Bprob[Bprobkey][1]
+			for Bprobkey in Bprob.keys():
+				prob[Bprobkey[0]][1] += Bprob[Bprobkey][0]*Bprob[Bprobkey][1]
 
-		for val in prob.values():
-			Tentropy -= val[0] * val[1]
-		
-		Tperplexity += pow(2,Tentropy)
+			for val in prob.values():
+				Tentropy -= val[0] * val[1]
+			
+			Tperplexity[part] += pow(2,Tentropy)
 
-	Tperplexity *= 1/float(part)
+		Tperplexity[part] *= 1/float(part)
 
-	return (Tperplexity)
+	return (Tperplexity[1], Tperplexity[2], Tperplexity[4])
 	
 	
 
@@ -227,31 +238,43 @@ print (t11-t1),'s -- Entropies of spanish corpus: ',UEntropyes, BEntropyes, TEnt
 
 print 'Relation between entropies in english and spanish', UEntropy/UEntropyes, BEntropy/BEntropyes, TEntropy/TEntropyes
 '''
-'''
-FPerplexity = computeTaggedModel ("corpus/taggedBrown.txt", 1)
-print 'Perplexity of full Browncorpus: ' , FPerplexity
 
-HPerplexity = computeTaggedModel ("corpus/taggedBrown.txt", 2)
-print 'Perplexity of half Browncorpus: ' , HPerplexity
+#FPerplexity = computeTaggedModel ("corpus/taggedBrown.txt", 1)
+#print 'Perplexity of full Browncorpus: ' , FPerplexity
 
-QPerplexity = computeTaggedModel ("corpus/taggedBrown.txt", 4)
-print 'Perplexity of quarter Browncorpus: ' , QPerplexity
-'''
+#HPerplexity = computeTaggedModel ("corpus/taggedBrown.txt", 2)
+#print 'Perplexity of half Browncorpus: ' , HPerplexity
 
-FPerplexityTWW = computeTaggedModelTWW ("corpus/taggedBrown.txt", 1)
-print 'Perplexity of full Browncorpus TWW: ' , FPerplexityTWW
+#QPerplexity = computeTaggedModel ("corpus/taggedBrown.txt", 4)
+#print 'Perplexity of quarter Browncorpus: ' , QPerplexity
 
-FPerplexityTTW = computeTaggedModelTTW ("corpus/taggedBrown.txt", 1)
-print 'Perplexity of full Browncorpus TTW: ' , FPerplexityTTW
 
-FPerplexityTWW = computeTaggedModelTWW ("corpus/taggedBrown.txt", 2)
-print 'Perplexity of half Browncorpus TWW: ' , FPerplexityTWW
+#FPerplexityTWW = computeTaggedModelTWW ("corpus/taggedBrown.txt", 1)
+#print 'Perplexity of full Browncorpus TWW: ' , FPerplexityTWW
 
-FPerplexityTTW = computeTaggedModelTTW ("corpus/taggedBrown.txt", 2)
-print 'Perplexity of half Browncorpus TTW: ' , FPerplexityTTW
+#FPerplexityTTW = computeTaggedModelTTW ("corpus/taggedBrown.txt", 1)
+#print 'Perplexity of full Browncorpus TTW: ' , FPerplexityTTW
 
-FPerplexityTWW = computeTaggedModelTWW ("corpus/taggedBrown.txt", 4)
-print 'Perplexity of quarter Browncorpus TWW: ' , FPerplexityTWW
+#HPerplexityTWW = computeTaggedModelTWW ("corpus/taggedBrown.txt", 2)
+#print 'Perplexity of half Browncorpus TWW: ' , HPerplexityTWW
 
-FPerplexityTTW = computeTaggedModelTTW ("corpus/taggedBrown.txt", 4)
-print 'Perplexity of quarter Browncorpus TTW: ' , FPerplexityTTW
+#HPerplexityTTW = computeTaggedModelTTW ("corpus/taggedBrown.txt", 2)
+#print 'Perplexity of half Browncorpus TTW: ' , HPerplexityTTW
+
+#QPerplexityTWW = computeTaggedModelTWW ("corpus/taggedBrown.txt", 4)
+#print 'Perplexity of quarter Browncorpus TWW: ' , QPerplexityTWW
+
+#QPerplexityTTW = computeTaggedModelTTW ("corpus/taggedBrown.txt", 4)
+#print 'Perplexity of quarter Browncorpus TTW: ' , QPerplexityTTW
+
+(FPerplexity, HPerplexity, QPerplexity) = computeTaggedModel ("corpus/taggedBrown.txt")
+(FPerplexityTWW, HPerplexityTWW, QPerplexityTWW) = computeTaggedModelTWW ("corpus/taggedBrown.txt")
+(FPerplexityTTW, HPerplexityTTW, QPerplexityTTW) = computeTaggedModelTTW ("corpus/taggedBrown.txt")
+
+
+print '------------------------------------------------------------------------'
+print '||  Model    ||      Full       ||      Half       ||     Quarter     ||'
+print '|| <x,y,z>   || ',FPerplexity,'  || ',HPerplexity,' || ',QPerplexity,' ||'
+print '|| <x`,y,z>  || ',FPerplexityTWW,' || ',HPerplexityTWW,'  || ',QPerplexityTWW,' ||'
+print '|| <x`,y`,z> || ',FPerplexityTTW,' || ',HPerplexityTTW,' || ',QPerplexityTTW,' ||'
+print '------------------------------------------------------------------------'
