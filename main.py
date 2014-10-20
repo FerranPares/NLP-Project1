@@ -47,9 +47,10 @@ def computeTaggedModel (pathfile, part):
 	#Ltags = map(lambda x:x[1],LofPwords)
 	Nwords = len(Lwords)
 	#Ntags = len(Ltags)
-	Tentropy = 0.0
+	Tperplexity = 0.0
 
 	for i in range(part):
+		Tentropy = 0.0
 		(U,B,T) = countNgrams(Lwords,i*Nwords/part,(i+1)*Nwords/part)
 		#(Ut, Bt, Tt) = countNgrams(Ltags,i*Ntags/part,(i+1)*Ntags/part)
 		length = float(Nwords/part)
@@ -74,10 +75,12 @@ def computeTaggedModel (pathfile, part):
 
 		for val in prob.values():
 			Tentropy -= val[0] * val[1]
+		
+		Tperplexity += pow(2,Tentropy)
 
-	Tentropy *= 1/float(part)
+	Tperplexity *= 1/float(part)
 
-	return (Tentropy)
+	return (Tperplexity)
 
 def getTagfromWord(LPairs):
 	wordtagDIC = {}
@@ -95,9 +98,10 @@ def computeTaggedModelTWW (pathfile, part):
 	wordTagDIC = getTagfromWord(LPairs)
 	Nwords = len(Lwords)
 	Ntags = len(Ltags)
-	Tentropy = 0.0
+	Tperplexity = 0.0
 
 	for i in range(part):
+		Tentropy = 0.0
 		(U,B,T) = countNgrams(Lwords,i*Nwords/part,(i+1)*Nwords/part)
 		(Ut, Bt, Tt) = countNgrams(Ltags,i*Ntags/part,(i+1)*Ntags/part)
 		length = float(Nwords/part) #equal length of tags
@@ -136,10 +140,12 @@ def computeTaggedModelTWW (pathfile, part):
 
 		for val in prob.values():
 			Tentropy -= val[0] * val[1]
+		
+		Tperplexity += pow(2,Tentropy)
 
-	Tentropy *= 1/float(part)
+	Tperplexity *= 1/float(part)
 
-	return (Tentropy)
+	return (Tperplexity)
 	
 def computeTaggedModelTTW (pathfile, part):
 	LPairs = getTaggedWordsFromFile(pathfile)
@@ -148,9 +154,10 @@ def computeTaggedModelTTW (pathfile, part):
 	wordTagDIC = getTagfromWord(LPairs)
 	Nwords = len(Lwords)
 	Ntags = len(Ltags)
-	Tentropy = 0.0
+	Tperplexity = 0.0
 
 	for i in range(part):
+		Tentropy = 0.0
 		(U,B,T) = countNgrams(Lwords,i*Nwords/part,(i+1)*Nwords/part)
 		(Ut, Bt, Tt) = countNgrams(Ltags,i*Ntags/part,(i+1)*Ntags/part)
 		length = float(Nwords/part) #equal length of tags
@@ -189,15 +196,17 @@ def computeTaggedModelTTW (pathfile, part):
 
 		for val in prob.values():
 			Tentropy -= val[0] * val[1]
+		
+		Tperplexity += pow(2,Tentropy)
 
-	Tentropy *= 1/float(part)
+	Tperplexity *= 1/float(part)
 
-	return (Tentropy)
+	return (Tperplexity)
 	
 	
 
 
-'''
+
 t0 = time()
 (UEntropy, BEntropy, TEntropy) = computeModel("corpus/en.txt")
 t01 = time()
@@ -211,19 +220,30 @@ print (t11-t1),'s -- Entropies of spanish corpus: ',UEntropyes, BEntropyes, TEnt
 print 'Relation between entropies in english and spanish', UEntropy/UEntropyes, BEntropy/BEntropyes, TEntropy/TEntropyes
 
 
-FEntropy = computeTaggedModel ("corpus/taggedBrown.txt", 1)
-print 'Entropy of full Browncorpus: ' , FEntropy
+FPerplexity = computeTaggedModel ("corpus/taggedBrown.txt", 1)
+print 'Perplexity of full Browncorpus: ' , FPerplexity
 
-HEntropy = computeTaggedModel ("corpus/taggedBrown.txt", 2)
-print 'Entropy of half Browncorpus: ' , HEntropy
+HPerplexity = computeTaggedModel ("corpus/taggedBrown.txt", 2)
+print 'Perplexity of half Browncorpus: ' , HPerplexity
 
-QEntropy = computeTaggedModel ("corpus/taggedBrown.txt", 4)
-print 'Entropy of quarter Browncorpus: ' , QEntropy
-'''
+QPerplexity = computeTaggedModel ("corpus/taggedBrown.txt", 4)
+print 'Perplexity of quarter Browncorpus: ' , QPerplexity
 
-FEntropyTWW = computeTaggedModelTWW ("corpus/taggedBrown.txt", 1)
-print 'Entropy of full Browncorpus TWW: ' , FEntropyTWW
 
-FEntropyTTW = computeTaggedModelTTW ("corpus/taggedBrown.txt", 1)
-print 'Entropy of full Browncorpus TTW: ' , FEntropyTTW
+FPerplexityTWW = computeTaggedModelTWW ("corpus/taggedBrown.txt", 1)
+print 'Perplexity of full Browncorpus TWW: ' , FPerplexityTWW
 
+FPerplexityTTW = computeTaggedModelTTW ("corpus/taggedBrown.txt", 1)
+print 'Perplexity of full Browncorpus TTW: ' , FPerplexityTTW
+
+FPerplexityTWW = computeTaggedModelTWW ("corpus/taggedBrown.txt", 2)
+print 'Perplexity of half Browncorpus TWW: ' , FPerplexityTWW
+
+FPerplexityTTW = computeTaggedModelTTW ("corpus/taggedBrown.txt", 2)
+print 'Perplexity of half Browncorpus TTW: ' , FPerplexityTTW
+
+FPerplexityTWW = computeTaggedModelTWW ("corpus/taggedBrown.txt", 4)
+print 'Perplexity of quarter Browncorpus TWW: ' , FPerplexityTWW
+
+FPerplexityTTW = computeTaggedModelTTW ("corpus/taggedBrown.txt", 4)
+print 'Perplexity of quarter Browncorpus TTW: ' , FPerplexityTTW
