@@ -39,12 +39,38 @@ def computeModel(pathfile):
 
 	return (Uentropy, Bentropy, Tentropy)
 
-def getDicsfromPairs(LPairs, B, T):
+def getDicsfromPairs(LPairs, inic, end):
 	Btw = {}
 	Btt = {}
 	Ttww = {}
 	Tttw = {}
-	wordTagDIC = {}
+	
+	Btw[(LPairs[inic][1],LPairs[inic+1][0])]=1
+	Btt[(LPairs[inic][1],LPairs[inic+1][1])]=1
+	for i in range(inic+2,end):
+		if (LPairs[i-1][1],LPairs[i][0]) not in Btw:
+			Btw[(LPairs[i-1][1],LPairs[i][0])] = 1
+		else:
+			Btw[(LPairs[i-1][1],LPairs[i][0])] +=1
+		
+		if (LPairs[i-1][1],LPairs[i][1]) not in Btt:
+			Btt[(LPairs[i-1][1],LPairs[i][1])] = 1
+		else:
+			Btt[(LPairs[i-1][1],LPairs[i][1])] +=1
+		
+		if (LPairs[i-2][1],LPairs[i-1][0],LPairs[i][0]) not in Ttww:
+			Ttww[(LPairs[i-2][1],LPairs[i-1][0],LPairs[i][0])] = 1
+		else:
+			Ttww[(LPairs[i-2][1],LPairs[i-1][0],LPairs[i][0])] +=1
+		
+		if (LPairs[i-2][1],LPairs[i-1][1],LPairs[i][0]) not in Tttw:
+			Tttw[(LPairs[i-2][1],LPairs[i-1][1],LPairs[i][0])] = 1
+		else:
+			Tttw[(LPairs[i-2][1],LPairs[i-1][1],LPairs[i][0])] +=1
+	
+	return (Btw,Btt,Ttww,Tttw)
+	
+'''
 	for i in range(len(LPairs)):
 		if LPairs[i][0] not in wordTagDIC:
 			wordTagDIC[LPairs[i][0]] = LPairs[i][1]
@@ -70,8 +96,11 @@ def getDicsfromPairs(LPairs, B, T):
 			Tttw[wordTagDIC[tkey[0]],wordTagDIC[tkey[1]],tkey[2]] = T[tkey]
 		else:
 			Tttw[wordTagDIC[tkey[0]],wordTagDIC[tkey[1]],tkey[2]] += T[tkey]
+	
 
 	return (wordTagDIC,Btw,Btt,Ttww,Tttw)
+'''
+
 '''
 def computeTaggedModel (pathfile):
 	LPairs = getTaggedWordsFromFile(pathfile)
@@ -256,13 +285,12 @@ def computeAllTaggedModels (pathfile):
 			BpTWW = {}
 			pTTW = {}
 			BpTTW = {}
-			wordTagDIC = {}
 			Btw = {}
 			Btt = {}
 			Ttww = {}
 			Tttw = {}
 			
-			(wordTagDIC, Btw, Btt, Ttww, Tttw) = getDicsfromPairs(LPairs, B, T)
+			(Btw, Btt, Ttww, Tttw) = getDicsfromPairs(LPairs, i*Nwords/part, (i+1)*Nwords/part)
 
 			for key in U.keys():
 				pX = U[key]/length
@@ -369,7 +397,7 @@ print '------------------------------PERPLEXITIES------------------------------'
 print '------------------------------------------------------------------------'
 print '||  Model    ||      Full       ||      Half       ||     Quarter     ||'
 print '|| <x,y,z>   || ',FPerplexityWWW,'  || ',HPerplexityWWW,' || ',QPerplexityWWW,' ||'
-print '|| <x`,y,z>  || ',FPerplexityTWW,' || ',HPerplexityTWW,'  || ',QPerplexityTWW,' ||'
+print '|| <x`,y,z>  || ',FPerplexityTWW,' || ',HPerplexityTWW,' || ',QPerplexityTWW,' ||'
 print '|| <x`,y`,z> || ',FPerplexityTTW,' || ',HPerplexityTTW,' || ',QPerplexityTTW,' ||'
 print '------------------------------------------------------------------------'
 print ''
