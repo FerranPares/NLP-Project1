@@ -8,11 +8,12 @@ from time import time
 
 def computeModel(pathfile):
 	Lwords = getWordsFromFile(pathfile)
-	(U,B,T) = countNgrams(Lwords,0,0)
+	(U,B,T) = countNgrams(Lwords,0,0)#482373
 	Uentropy = 0.0
 	Bentropy = 0.0
 	Tentropy = 0.0
 	length = float(len(Lwords))
+	#length = float(482373)
 	prob = {}
 	Bprob = {}
 
@@ -41,7 +42,6 @@ def computeModel(pathfile):
 
 def getDicsfromPairs(LPairs, inic, end):
 	Btw = {}
-	Btt = {}
 	Ttww = {}
 	Tttw = {}
 	
@@ -53,11 +53,6 @@ def getDicsfromPairs(LPairs, inic, end):
 		else:
 			Btw[(LPairs[i-1][1],LPairs[i][0])] +=1
 		
-		if (LPairs[i-1][1],LPairs[i][1]) not in Btt:
-			Btt[(LPairs[i-1][1],LPairs[i][1])] = 1
-		else:
-			Btt[(LPairs[i-1][1],LPairs[i][1])] +=1
-		
 		if (LPairs[i-2][1],LPairs[i-1][0],LPairs[i][0]) not in Ttww:
 			Ttww[(LPairs[i-2][1],LPairs[i-1][0],LPairs[i][0])] = 1
 		else:
@@ -68,7 +63,7 @@ def getDicsfromPairs(LPairs, inic, end):
 		else:
 			Tttw[(LPairs[i-2][1],LPairs[i-1][1],LPairs[i][0])] +=1
 	
-	return (Btw,Btt,Ttww,Tttw)
+	return (Btw,Ttww,Tttw)
 
 def computeAllTaggedModels (pathfile):
 	LPairs = getTaggedWordsFromFile(pathfile)
@@ -105,11 +100,10 @@ def computeAllTaggedModels (pathfile):
 			pTTW = {}
 			BpTTW = {}
 			Btw = {}
-			Btt = {}
 			Ttww = {}
 			Tttw = {}
 			
-			(Btw, Btt, Ttww, Tttw) = getDicsfromPairs(LPairs, i*Nwords/part, (i+1)*Nwords/part)
+			(Btw, Ttww, Tttw) = getDicsfromPairs(LPairs, i*Nwords/part, (i+1)*Nwords/part)
 
 			for key in U.keys():
 				pX = U[key]/length
@@ -128,8 +122,8 @@ def computeAllTaggedModels (pathfile):
 				pYIX = float(Btw[bkey])/float(Ut[bkey[0]])
 				BpTWW[bkey] = [pYIX, 0.0]
 
-			for bkey in Btt.keys():
-				pYIX = float(Btt[bkey])/float(Ut[bkey[0]])
+			for bkey in Bt.keys():
+				pYIX = float(Bt[bkey])/float(Ut[bkey[0]])
 				BpTTW[bkey] = [pYIX, 0.0]
 
 			for tkey in T.keys():
@@ -141,7 +135,7 @@ def computeAllTaggedModels (pathfile):
 				BpTWW[tkey[0],tkey[1]][1] += pZIXY * log(pZIXY,2)
 
 			for tkey in Tttw.keys():
-				pZIXY = float(Tttw[tkey])/float(Btt[tkey[0],tkey[1]])
+				pZIXY = float(Tttw[tkey])/float(Bt[tkey[0],tkey[1]])
 				BpTTW[tkey[0],tkey[1]][1] += pZIXY * log(pZIXY,2)
 
 			for Bpkey in BpWWW.keys():
@@ -197,8 +191,6 @@ print 'Time to run english entropies: ', (t00-t0)
 print 'Time to run spanish entropies: ', (t11-t1)
 print ''
 print ''
-
-#print 'Relation between entropies in english and spanish', UEntropy/UEntropyes, BEntropy/BEntropyes, TEntropy/TEntropyes
 
 print 'Computing perplexities with Browncorpus...'
 t2 = time()
