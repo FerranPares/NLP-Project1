@@ -6,14 +6,17 @@
 from auxiliar import *
 from time import time
 
-def computeModel(pathfile):
+def computeModel(pathfile, lencorpus=0):
 	Lwords = getWordsFromFile(pathfile)
-	(U,B,T) = countNgrams(Lwords,0,0)#482373
+	(U,B,T) = countNgrams(Lwords,0,lencorpus)
 	Uentropy = 0.0
 	Bentropy = 0.0
 	Tentropy = 0.0
-	length = float(len(Lwords))
-	#length = float(482373)
+	if lencorpus==0:
+		length = float(len(Lwords))
+	else:
+		length = float(lencorpus)
+	
 	prob = {}
 	Bprob = {}
 
@@ -46,7 +49,6 @@ def getDicsfromPairs(LPairs, inic, end):
 	Tttw = {}
 	
 	Btw[(LPairs[inic][1],LPairs[inic+1][0])]=1
-	Btt[(LPairs[inic][1],LPairs[inic+1][1])]=1
 	for i in range(inic+2,end):
 		if (LPairs[i-1][1],LPairs[i][0]) not in Btw:
 			Btw[(LPairs[i-1][1],LPairs[i][0])] = 1
@@ -73,7 +75,7 @@ def computeAllTaggedModels (pathfile):
 	Ntags = len(Ltags)
 	
 	TperplexityWWW = {}
-	TperplexityWWW[1] = 0.0 #[0.0,0.0,0.0]
+	TperplexityWWW[1] = 0.0 
 	TperplexityWWW[2] = 0.0
 	TperplexityWWW[4] = 0.0
 	TperplexityTWW = {}
@@ -174,21 +176,29 @@ t0 = time()
 t00 = time()
 
 print ''
-print 'Computing entropies with spanish corpus...'
+print 'Computing entropies with small english corpus...'
 t1 = time()
-(UEntropyES, BEntropyES, TEntropyES) = computeModel("corpus/es.txt")
+(UEntropyENS, BEntropyENS, TEntropyENS) = computeModel("corpus/en.txt", 482373)
 t11 = time()
+
+print ''
+print 'Computing entropies with spanish corpus...'
+t2 = time()
+(UEntropyES, BEntropyES, TEntropyES) = computeModel("corpus/es.txt")
+t22 = time()
 
 print ''
 print '----------------------------------ENTROPIES-----------------------------------'
 print '------------------------------------------------------------------------------'
 print '|| Corpus language ||     Unigram     ||     Bigram      ||     Trigram     ||'
 print '||     English     || ',UEntropyEN,'   || ', BEntropyEN,'  || ', TEntropyEN,' ||'
+print '||  Small English  || ',UEntropyENS,' || ', BEntropyENS,' || ', TEntropyENS,' ||'
 print '||     Spanish     || ',UEntropyES,' || ', BEntropyES,' || ', TEntropyES,'   ||'
 print '------------------------------------------------------------------------------'
 print ''
-print 'Time to run english entropies: ', (t00-t0)
-print 'Time to run spanish entropies: ', (t11-t1)
+print 'Time to run english entropies: ', (t00-t0),' s'
+print 'Time to run small english entropies: ', (t11-t1),' s'
+print 'Time to run spanish entropies: ', (t22-t2),' s'
 print ''
 print ''
 
@@ -206,4 +216,4 @@ print '|| <x`,y,z>  || ',FPerplexityTWW,' || ',HPerplexityTWW,' || ',QPerplexity
 print '|| <x`,y`,z> || ',FPerplexityTTW,' || ',HPerplexityTTW,' || ',QPerplexityTTW,' ||'
 print '------------------------------------------------------------------------'
 print ''
-print 'Time to run perplexities: ', (t22-t2)
+print 'Time to run perplexities: ', (t22-t2),' s'
